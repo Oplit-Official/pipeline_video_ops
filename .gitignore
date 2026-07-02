@@ -1,0 +1,37 @@
+# --- Médias & contenus lourds (jamais versionnés) ---
+*.mp4
+*.mov
+*.aiff
+*.wav
+*.mp3
+*.pdf
+.DS_Store
+
+# --- Dossiers de contenu / build / générés ---
+imports/
+build/
+**/_work/
+**/vbuild/
+**/extract/
+**/shots_auto/
+**/pw-profile/
+voix_FR_samples/
+video helpdesk/
+video helpdesk - V1/
+Articles Helpdesk pour alimentation IA/
+Gestion et création des groupes de secteurs/
+
+# --- Symlink vers un autre projet ---
+lbast-webapp copie
+
+# --- Dans « tutorials_automation 2 » : ne garder que scripts + README ---
+tutorials_automation 2/*
+!tutorials_automation 2/scripts/
+tutorials_automation 2/scripts/*
+!tutorials_automation 2/scripts/*.py
+!tutorials_automation 2/README.md
+
+# --- Divers ---
+__pycache__/
+*.pyc
+*.code-workspace

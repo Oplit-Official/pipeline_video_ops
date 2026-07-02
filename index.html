@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Oplit · Studio Ops</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=22" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css?v=22" />
+</head>
+<body>
+  <!-- Landing / page d'accueil -->
+  <section class="landing" id="landing">
+    <div class="landing-bg"></div>
+    <div class="landing-grid">
+      <!-- Colonne gauche : pitch -->
+      <div class="landing-left">
+        <div class="landing-brand">
+          <div class="brand-logo">O</div>
+          <span>Oplit · Studio Ops</span>
+        </div>
+
+        <div class="landing-tag">Catalogue de formation interne</div>
+
+        <h1 class="landing-title">Composez vos parcours de<br/><span>formation Oplit</span><br/>en quelques clics.</h1>
+
+        <p class="landing-lead">
+          Un catalogue d'<strong>articles</strong> tutoriels couvrant tout le paramétrage Oplit —
+          structure usine, secteurs, règles de calcul, imports. La team Ops sélectionne
+          les articles utiles, et le studio génère le parcours correspondant.
+        </p>
+
+        <div class="landing-actions">
+          <button class="landing-cta" id="enterBtn">
+            Explorer le catalogue
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="landing-metric">
+            <strong>21</strong> articles vidéo · <strong>5</strong> catégories
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite : timeline des étapes -->
+      <div class="landing-right">
+        <p class="lr-head">Comment ça marche</p>
+        <ol class="landing-steps">
+          <li class="lstep"><span class="lstep-n">1</span><div><b>Parcourez</b><p>5 catégories d'articles classés par section.</p></div></li>
+          <li class="lstep"><span class="lstep-n">2</span><div><b>Sélectionnez</b><p>Ajoutez les articles utiles à votre parcours.</p></div></li>
+          <li class="lstep"><span class="lstep-n">3</span><div><b>Générez</b><p>Exportez le parcours, prêt à produire.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <div class="app" id="appRoot">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">O</div>
+        <div class="brand-text">
+          <span class="brand-name">Oplit</span>
+          <span class="brand-sub">Studio Ops</span>
+        </div>
+      </div>
+
+      <nav class="cat-nav" id="catNav"></nav>
+
+      <div class="sidebar-foot">
+        <div class="foot-card">
+          <span class="foot-dot"></span>
+          <div>
+            <p class="foot-title">Session staging</p>
+            <p class="foot-sub">staging.oplit.fr</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="catTitle">Catalogue d'articles</h1>
+          <p id="catDesc" class="subtitle">Composez un parcours de formation sur-mesure pour la team Ops.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="search">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="text" id="searchInput" placeholder="Rechercher un article…" />
+          </div>
+          <div class="topbar-row">
+            <button class="undo-btn" id="undoBtn" disabled title="Annuler la dernière action">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Annuler
+            </button>
+            <button class="import-btn" id="importBtn">
+              <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Importer un exercice
+            </button>
+          </div>
+          <input type="file" id="importFile" accept="application/pdf" hidden />
+        </div>
+      </header>
+
+      <section class="grid" id="exerciseGrid"></section>
+    </main>
+
+    <!-- Selection panel -->
+    <aside class="panel">
+      <div class="panel-head">
+        <h2>Mon parcours</h2>
+        <button class="link-btn" id="clearBtn">Tout effacer</button>
+      </div>
+
+      <div class="panel-stats">
+        <div class="stat">
+          <span class="stat-num" id="statCount">0</span>
+          <span class="stat-lbl">articles</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statTime">0<small>min</small></span>
+          <span class="stat-lbl">durée est.</span>
+        </div>
+      </div>
+
+      <div class="panel-list" id="panelList">
+        <div class="panel-empty" id="panelEmpty">
+          <div class="empty-ill">🎯</div>
+          <p>Aucun article sélectionné.<br/>Cliquez sur les cartes pour composer le parcours.</p>
+        </div>
+      </div>
+
+      <button class="cta" id="generateBtn" disabled>
+        Générer le parcours
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </aside>
+  </div>
+
+  <!-- Modale d'envoi -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" aria-label="Fermer">×</button>
+      <h2>Envoyer le parcours</h2>
+      <p class="modal-sub" id="modalSub">0 articles · 0 min</p>
+
+      <!-- Vue 1 : composition -->
+      <div class="modal-view" id="viewCompose">
+      <label class="field-label">Client destinataire</label>
+      <div class="client-row">
+        <select id="clientSelect" class="client-select"></select>
+        <button class="icon-btn" id="addClientToggle" title="Ajouter un client">+</button>
+      </div>
+      <p class="client-email" id="clientEmail"></p>
+
+      <div class="add-client" id="addClientForm" hidden>
+        <input type="text" id="newClientName" placeholder="Nom du client" />
+        <input type="email" id="newClientEmail" placeholder="adresse@client.com" />
+        <div class="add-client-actions">
+          <button class="link-btn" id="cancelClient">Annuler</button>
+          <button class="btn-mini" id="saveClient">Ajouter</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="downloadBtn">
+          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Télécharger
+        </button>
+        <button class="btn-primary" id="sendBtn">
+          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Envoyer au client
+        </button>
+      </div>
+      </div><!-- /view compose -->
+
+      <!-- Vue 2 : aperçu du message -->
+      <div class="modal-view" id="viewPreview" hidden>
+        <p class="preview-to">À : <strong id="previewTo"></strong></p>
+        <label class="field-label">Aperçu du message</label>
+        <textarea id="previewBody" class="preview-body" rows="9"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="backBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Retour
+          </button>
+          <button class="btn-primary" id="confirmSendBtn">
+            <svg viewBox="0 0 24 24" width="17" height="17"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Confirmer l'envoi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Builder Parcours PDF -->
+  <div class="modal-overlay" id="pdfModal">
+    <div class="modal modal-lg">
+      <button class="modal-close" id="pdfModalClose" aria-label="Fermer">×</button>
+      <h2>Composer le parcours PDF</h2>
+      <p class="modal-sub" id="pdfModalSub">0 article</p>
+
+      <div class="pdf-builder">
+        <div class="pb-left">
+          <label class="field-label">Articles — glisser pour réordonner</label>
+          <ol class="pb-list" id="pbList"></ol>
+          <p class="pb-video-note" id="pbVideoNote" hidden></p>
+        </div>
+        <div class="pb-right">
+          <label class="field-label">Titre</label>
+          <input type="text" id="pbTitle" />
+          <label class="field-label">Sous-titre</label>
+          <input type="text" id="pbSubtitle" />
+          <label class="field-label">Texte d'introduction</label>
+          <textarea id="pbIntro" rows="2"></textarea>
+          <label class="field-label">Objectifs (un par ligne)</label>
+          <textarea id="pbObjectives" rows="3"></textarea>
+          <div class="pb-two">
+            <div>
+              <label class="field-label">Titre de conclusion</label>
+              <input type="text" id="pbConclTitle" />
+            </div>
+          </div>
+          <label class="field-label">Texte de conclusion</label>
+          <textarea id="pbConclText" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="pbEmailBtn">Envoyer au client…</button>
+        <button class="btn-primary" id="pbGenerateBtn">
+          <svg viewBox="0 0 24 24" width="17" height="17"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Générer le PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Import d'exercice -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal">
+      <button class="modal-close" id="importClose" aria-label="Fermer">×</button>
+
+      <!-- Vue 1 : formulaire -->
+      <div id="importForm">
+        <h2>Importer un exercice</h2>
+        <p class="modal-sub">Le PDF est transformé en vidéo (voix Paul K), puis ajouté au catalogue.</p>
+        <div class="eleven-box" id="elevenBox">
+          <span class="eleven-ico">🔑</span>
+          <div class="eleven-body">
+            <span class="eleven-title">Crédits ElevenLabs</span>
+            <span class="eleven-val" id="elevenVal">…</span>
+          </div>
+        </div>
+        <label class="field-label">Fichier PDF</label>
+        <div class="import-file" id="importDrop">
+          <span id="importFileName">Aucun fichier sélectionné</span>
+          <button class="btn-mini" id="importPick">Choisir…</button>
+        </div>
+        <label class="field-label">Titre de l'exercice</label>
+        <input type="text" id="importTitle" placeholder="ex. Créer un poste de charge" />
+        <label class="field-label">Catégorie</label>
+        <div class="client-row">
+          <select id="importCategory" class="client-select"></select>
+          <button class="icon-btn" id="catAddToggle" title="Ajouter une catégorie">+</button>
+          <button class="icon-btn" id="catEditToggle" title="Renommer la catégorie">✎</button>
+        </div>
+        <div class="add-client" id="catForm" hidden>
+          <div class="cat-form-row">
+            <input type="text" id="catEmoji" placeholder="📁" maxlength="2" />
+            <input type="text" id="catName" placeholder="Nom de la catégorie" />
+          </div>
+          <div class="add-client-actions">
+            <button class="link-btn" id="catCancel">Annuler</button>
+            <button class="btn-mini" id="catSave">Enregistrer</button>
+          </div>
+        </div>
+        <label class="field-label">Section (optionnel)</label>
+        <input type="text" id="importSection" placeholder="ex. Paramétrage" />
+        <div class="modal-actions">
+          <button class="btn-primary" id="importLaunch">
+            <svg viewBox="0 0 24 24" width="17" height="17"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
+            Lancer la génération
+          </button>
+        </div>
+      </div>
+
+      <!-- Vue 2 : progression -->
+      <div id="importProgress" hidden>
+        <h2>Génération en cours…</h2>
+        <p class="modal-sub" id="importProgSub">Cela prend quelques minutes. Vous pouvez laisser la fenêtre ouverte.</p>
+        <ol class="steps" id="importSteps">
+          <li data-step="reading"><span class="step-dot"></span> Lecture du PDF</li>
+          <li data-step="extract"><span class="step-dot"></span> Extraction des captures</li>
+          <li data-step="spec"><span class="step-dot"></span> Préparation du script</li>
+          <li data-step="render"><span class="step-dot"></span> Voix + montage vidéo</li>
+          <li data-step="done"><span class="step-dot"></span> Disponible dans le catalogue</li>
+        </ol>
+        <div class="progress-track"><div class="progress-bar" id="importBar"></div></div>
+        <p class="import-hint" id="importHint"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Gérer une vidéo -->
+  <div class="modal-overlay" id="manageModal">
+    <div class="modal">
+      <button class="modal-close" id="manageClose" aria-label="Fermer">×</button>
+      <h2>Gérer la vidéo</h2>
+      <p class="modal-sub" id="manageSub"></p>
+      <label class="field-label">Titre</label>
+      <input type="text" id="manageTitle" class="client-select" style="width:100%" />
+      <label class="field-label">Catégorie</label>
+      <select id="manageCategory" class="client-select" style="width:100%"></select>
+      <label class="field-label">Sous-catégorie</label>
+      <select id="manageSection" class="client-select" style="width:100%"></select>
+      <input type="text" id="manageSectionNew" class="client-select" style="width:100%;margin-top:8px" placeholder="Nom de la nouvelle sous-catégorie" hidden />
+      <div class="modal-actions">
+        <button class="btn-danger" id="manageDelete">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6h18M8 6V4h8v2m-1 0v14a2 2 0 01-2 2H10a2 2 0 01-2-2V6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Supprimer
+        </button>
+        <button class="btn-primary" id="manageSave">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="data.js?v=22"></script>
+  <script src="app.js?v=22"></script>
+</body>
+</html>

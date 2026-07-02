@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Oplit · Lecteur de parcours</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=22" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css?v=22" />
+</head>
+<body>
+  <div class="player">
+    <header class="player-top">
+      <a class="player-back" href="index.html?v=22">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Retour au catalogue
+      </a>
+      <div class="player-brand">
+        <div class="brand-logo">O</div>
+        <span>Parcours vidéo</span>
+      </div>
+    </header>
+
+    <div class="player-body">
+      <!-- Vidéo principale -->
+      <section class="player-stage">
+        <div class="stage-frame">
+          <video id="video" controls autoplay playsinline></video>
+        </div>
+        <div class="stage-info">
+          <p class="stage-cat" id="stageCat"></p>
+          <h1 id="stageTitle">—</h1>
+          <div class="stage-nav">
+            <button class="stage-btn" id="prevBtn">◀ Précédent</button>
+            <span class="stage-pos" id="stagePos">1 / 1</span>
+            <button class="stage-btn" id="nextBtn">Suivant ▶</button>
+            <button class="stage-btn primary" id="pdfBtn">
+              <svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Voir le PDF
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Playlist -->
+      <aside class="player-list">
+        <div class="pl-head-row">
+          <h2>Playlist</h2>
+          <span id="plCount">0 vidéos</span>
+        </div>
+        <div id="playlist"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Visionneuse PDF -->
+  <div class="pdf-overlay" id="pdfOverlay">
+    <div class="pdf-modal">
+      <div class="pdf-head">
+        <span id="pdfTitle">Document</span>
+        <div class="pdf-head-actions">
+          <a id="pdfOpen" href="#" target="_blank" class="pdf-link">Ouvrir dans un onglet ↗</a>
+          <button class="pdf-close" id="pdfClose" aria-label="Fermer">×</button>
+        </div>
+      </div>
+      <iframe id="pdfFrame" title="PDF"></iframe>
+    </div>
+  </div>
+
+  <script src="player.js?v=22"></script>
+</body>
+</html>
