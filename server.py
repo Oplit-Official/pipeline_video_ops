@@ -13,6 +13,22 @@ from make_parcours_pdf import build_parcours
 import import_pipeline
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _load_env(path):
+    """Charge un fichier .env (KEY=VALUE) dans l'environnement (sans écraser l'existant)."""
+    if not os.path.exists(path):
+        return
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_load_env(os.path.join(BASE_DIR, ".env"))
+
 IMPORTS_DIR = os.path.join(BASE_DIR, "imports")
 IMPORTS_JSON = os.path.join(IMPORTS_DIR, "imports.json")
 os.makedirs(IMPORTS_DIR, exist_ok=True)

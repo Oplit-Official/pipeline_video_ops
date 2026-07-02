@@ -31,6 +31,9 @@ tutorials_automation 2/scripts/*
 !tutorials_automation 2/scripts/*.py
 !tutorials_automation 2/README.md
 
+# --- Secrets ---
+.env
+
 # --- Divers ---
 __pycache__/
 *.pyc

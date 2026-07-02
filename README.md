@@ -20,16 +20,22 @@ automatiquement une vidéo** (voix off ElevenLabs + captures).
 > Les **médias** (vidéos `.mp4`, PDF FAQ, dossiers `video helpdesk`, `imports/`, artefacts de
 > build) ne sont **pas versionnés** (voir `.gitignore`) : ils restent locaux.
 
-## Lancer l'interface
+## Installation & lancement
 
 ```bash
-python3 server.py        # http://localhost:8765
+pip install -r requirements.txt          # Pillow, reportlab, pypdf, numpy, scipy
+brew install ffmpeg poppler              # binaires système (macOS)
+cp .env.example .env                      # puis renseigner les clés dans .env
+python3 server.py                         # http://localhost:8765
 ```
 
-## Dépendances
+Il faut aussi récupérer les **médias** (dossiers `Articles Helpdesk…`, `video helpdesk…`),
+non versionnés, pour que le catalogue pointe vers du contenu réel.
 
-- Python : `Pillow`, `reportlab`, `pypdf`, `numpy`, `scipy`
-- Binaires système : `ffmpeg`, `poppler` (`pdfunite`, `pdfimages`, `pdftotext`)
-- Clés (hors dépôt, lues depuis `~/.config` ou l'environnement) :
-  - `ELEVENLABS_API_KEY` (ou `~/.config/elevenlabs/key`) — voix off
-  - `ANTHROPIC_API_KEY` (ou `~/.config/anthropic/key`) — réécriture des scripts
+## Clés (dans `.env`, jamais committé)
+
+- `ELEVENLABS_API_KEY` — voix off des vidéos importées (requis pour l'import)
+- `ANTHROPIC_API_KEY` — réécriture des scripts de narration (optionnel, repli sinon)
+
+Le serveur charge automatiquement le `.env` au démarrage ; à défaut il lit aussi
+`~/.config/elevenlabs/key` et `~/.config/anthropic/key`, ou les variables d'environnement.
