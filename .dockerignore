@@ -1,0 +1,23 @@
+.git
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+# médias & contenus lourds (ne pas gonfler l'image)
+*.mp4
+*.mov
+*.aiff
+*.wav
+*.mp3
+imports/
+build/
+**/_work/
+**/vbuild/
+**/extract/
+voix_FR_samples/
+video helpdesk/
+video helpdesk - V1/
+Articles Helpdesk pour alimentation IA/
+Gestion et création des groupes de secteurs/
+lbast-webapp copie

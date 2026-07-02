@@ -29,7 +29,7 @@ def _load_env(path):
 
 _load_env(os.path.join(BASE_DIR, ".env"))
 
-IMPORTS_DIR = os.path.join(BASE_DIR, "imports")
+IMPORTS_DIR = os.environ.get("IMPORTS_DIR") or os.path.join(BASE_DIR, "imports")
 IMPORTS_JSON = os.path.join(IMPORTS_DIR, "imports.json")
 os.makedirs(IMPORTS_DIR, exist_ok=True)
 
@@ -309,7 +309,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
+    port = int(os.environ.get("PORT") or (sys.argv[1] if len(sys.argv) > 1 else 8765))
     httpd = ThreadingHTTPServer(("", port), partial(Handler, directory=BASE_DIR))
     print(f"Studio Ops sur http://localhost:{port}  (Ctrl+C pour arrêter)")
     try:

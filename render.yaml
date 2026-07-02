@@ -1,0 +1,17 @@
+# Déploiement Render — service web Docker
+# Renseignez ELEVENLABS_API_KEY / ANTHROPIC_API_KEY dans le dashboard Render (Secrets).
+services:
+  - type: web
+    name: pipeline-video-ops
+    runtime: docker
+    plan: starter          # « free » = éphémère + pas de disque ; « starter » pour la persistance
+    healthCheckPath: /index.html
+    envVars:
+      - key: ELEVENLABS_API_KEY
+        sync: false          # à saisir dans le dashboard (non versionné)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+    disk:                    # persiste les vidéos importées + imports.json
+      name: imports-data
+      mountPath: /app/imports
+      sizeGB: 1

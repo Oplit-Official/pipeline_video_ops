@@ -32,6 +32,24 @@ python3 server.py                         # http://localhost:8765
 Il faut aussi récupérer les **médias** (dossiers `Articles Helpdesk…`, `video helpdesk…`),
 non versionnés, pour que le catalogue pointe vers du contenu réel.
 
+## Déploiement (Render, Docker)
+
+Le repo contient un `Dockerfile` (Python + ffmpeg + poppler + polices) et un `render.yaml`.
+
+1. Sur [Render](https://render.com) : **New → Blueprint** et pointer sur ce repo (lit `render.yaml`).
+2. Renseigner `ELEVENLABS_API_KEY` et `ANTHROPIC_API_KEY` dans les **Secrets** du service.
+3. Un **disque persistant** est monté sur `/app/imports` (vidéos importées + `imports.json`).
+
+> ⚠️ Le plan **free** de Render est éphémère et sans disque → utiliser **starter** pour la persistance.
+> ⚠️ Les **médias existants** (`Articles Helpdesk…`, `video helpdesk…`) ne sont pas dans l'image :
+> pour un catalogue fonctionnel en ligne, il faut les téléverser sur le disque ou les héberger
+> ailleurs (Drive / R2 / S3). Les vidéos **importées** via l'appli, elles, sont bien persistées.
+
+Build/test en local :
+```bash
+docker build -t pipeline-video-ops . && docker run -p 8765:8765 --env-file .env pipeline-video-ops
+```
+
 ## Clés (dans `.env`, jamais committé)
 
 - `ELEVENLABS_API_KEY` — voix off des vidéos importées (requis pour l'import)
