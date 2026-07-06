@@ -30,6 +30,7 @@ tutorials_automation 2/*
 tutorials_automation 2/scripts/*
 !tutorials_automation 2/scripts/*.py
 !tutorials_automation 2/README.md
+!tutorials_automation 2/build_video.py
 
 # --- Secrets ---
 .env
