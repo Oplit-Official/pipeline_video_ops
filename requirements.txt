@@ -3,3 +3,4 @@ reportlab
 pypdf
 numpy
 scipy
+playwright   # capture live Oplit (import) — nécessite Chrome + session staging loguée

@@ -4,11 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Oplit · Studio Ops</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=23" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=24" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles.css?v=23" />
+<link rel="stylesheet" href="styles.css?v=24" />
 </head>
 <body>
   <!-- Landing / page d'accueil -->
@@ -71,11 +71,12 @@
 
       <div class="sidebar-foot">
         <div class="foot-card">
-          <span class="foot-dot"></span>
-          <div>
-            <p class="foot-title">Session staging</p>
-            <p class="foot-sub">staging.oplit.fr</p>
+          <span class="foot-dot" id="oplitDot"></span>
+          <div style="flex:1;min-width:0">
+            <p class="foot-title" id="oplitTitle">Oplit staging</p>
+            <p class="foot-sub" id="oplitSub">vérification…</p>
           </div>
+          <button class="foot-reco" id="oplitReco" title="Se (re)connecter à Oplit">↻</button>
         </div>
       </div>
     </aside>
@@ -281,6 +282,11 @@
         </div>
         <label class="field-label">Section (optionnel)</label>
         <input type="text" id="importSection" placeholder="ex. Paramétrage" />
+        <label class="live-toggle" id="liveToggleWrap">
+          <input type="checkbox" id="importLive" />
+          <span><b>Capture live sur Oplit</b> — vraies captures de l'app (Claude déduit les écrans). Sinon captures du PDF.</span>
+        </label>
+        <p class="live-hint" id="liveHint"></p>
         <div class="modal-actions">
           <button class="btn-primary" id="importLaunch">
             <svg viewBox="0 0 24 24" width="17" height="17"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
@@ -332,7 +338,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <script src="data.js?v=23"></script>
-  <script src="app.js?v=23"></script>
+  <script src="data.js?v=24"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

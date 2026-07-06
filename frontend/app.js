@@ -599,7 +599,9 @@ $("#importLaunch").onclick = async () => {
   try {
     const res = await fetch("/api/import-exercise", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, section, category, category_icon, pdf_base64: importFileData }),
+      body: JSON.stringify({ title, section, category, category_icon,
+                             live: $("#importLive").checked && !$("#importLive").disabled,
+                             pdf_base64: importFileData }),
     });
     const j = await res.json();
     if (!res.ok) throw new Error(j.error || "Erreur serveur.");
@@ -884,3 +886,42 @@ $("#manageDelete").onclick = async () => {
 applyOverrides();
 render();
 refreshUndo();
+
+// ====== Connexion Oplit (statut + reconnexion) + toggle capture live ======
+async function refreshOplit() {
+  let st;
+  try { st = await (await fetch("/api/oplit-status")).json(); }
+  catch (e) { st = { connected: false }; }
+  const dot = $("#oplitDot"), sub = $("#oplitSub"), reco = $("#oplitReco");
+  const live = $("#importLive"), hint = $("#liveHint"), wrap = $("#liveToggleWrap");
+  if (st.logging_in) {
+    dot.style.background = "#f5a524"; sub.textContent = "connexion en cours…";
+  } else if (st.connected) {
+    dot.style.background = "var(--accent)"; sub.textContent = "connecté · staging.oplit.fr";
+  } else {
+    dot.style.background = "var(--rose)"; sub.textContent = "non connecté";
+  }
+  reco.disabled = !!st.logging_in;
+  // toggle capture live
+  if (live) {
+    live.disabled = !st.connected;
+    if (!st.connected) { live.checked = false; }
+    if (wrap) wrap.style.opacity = st.connected ? "1" : ".5";
+    if (hint) hint.textContent = st.connected
+      ? "" : "Connectez-vous à Oplit (bouton ↻ en bas à gauche) pour activer la capture live.";
+  }
+  return st;
+}
+
+$("#oplitReco").onclick = async () => {
+  try { await fetch("/api/oplit-login", { method: "POST" }); } catch (e) {}
+  toast("🌐 Fenêtre Oplit ouverte — connectez-vous, je détecte automatiquement.");
+  // poll le statut le temps de la connexion
+  let n = 0;
+  const t = setInterval(async () => {
+    const st = await refreshOplit();
+    if ((!st.logging_in && st.connected) || ++n > 120) { clearInterval(t); }
+  }, 3000);
+};
+
+refreshOplit();

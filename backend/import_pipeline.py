@@ -172,40 +172,74 @@ def _split_narration(text, n):
 
 
 def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda *a: None,
-                remaining_chars=None):
+                remaining_chars=None, live=False):
     title = _nfc(title)
     section = _nfc(section)
-    on_progress("extract", "Extraction des captures du PDF", 12, {})
-    shots = _extract_shots(pdf_path, os.path.join(work_dir, "shots"))
-    if not shots:
-        raise RuntimeError("Aucune capture exploitable trouvée dans le PDF "
-                           "(images trop petites ou PDF sans capture).")
-    targets = sum(1 for s in shots if _has_target(s))   # étapes où le curseur aura une cible
-    on_progress("extract", f"{len(shots)} capture(s) · {targets} avec cible", 22,
-                {"shots": len(shots), "targets": targets})
-
-    on_progress("spec", "Préparation du script et de la narration", 30, {"shots": len(shots)})
-    raw = _clean(_pdf_text(pdf_path))
     intro = (f"Bienvenue dans ce tutoriel Oplit : {title}. "
              f"Suivez les étapes pour prendre en main cette fonctionnalité pas à pas.")
     outro = (f"Voilà, vous savez maintenant {title.lower()}. "
              f"Merci d'avoir suivi ce tutoriel Oplit, à très bientôt !")
-    llm = generate_narration(title, raw, len(shots))   # réécriture cohérente via Claude
-    if llm:
-        narr = [_clean(s) for s in llm["steps"]]
-        if llm.get("intro"):
-            intro = _clean(llm["intro"])
-        if llm.get("outro"):
-            outro = _clean(llm["outro"])
-    else:
-        narr = _split_narration(raw, len(shots))         # repli : découpage brut
-    scenes = [{"badge": "", "title": f"Tutoriel — {title}", "shot": None,
-               "subtitle": section or "", "narration": intro}]
-    for i, sh in enumerate(shots):
-        scenes.append({"badge": f"Étape {i + 1}", "title": title, "shot": sh,
-                       "narration": narr[i] or f"Étape {i + 1}."})
-    scenes.append({"badge": "", "title": "Tutoriel terminé", "shot": None,
-                   "subtitle": "Merci d'avoir suivi ce tutoriel", "narration": outro})
+    scenes = None
+    targets = 0
+
+    # --- Mode LIVE : Claude déduit les routes, capture réelle sur Oplit ---
+    if live:
+        try:
+            import oplit_live as ol
+            on_progress("extract", "Analyse du PDF + déduction des écrans Oplit", 12, {})
+            raw = _clean(_pdf_text(pdf_path))
+            sc = ol.deduce_script(title, raw)
+            if not sc:
+                raise RuntimeError("routes non déductibles")
+            on_progress("extract", f"Capture live de {len(sc['steps'])} écran(s) Oplit…", 22,
+                        {"shots": len(sc["steps"])})
+            steps, _ = ol.capture_live(sc["steps"], os.path.join(work_dir, "shots"))
+            intro = sc.get("intro") or intro
+            outro = sc.get("outro") or outro
+            scenes = [{"badge": "", "title": f"Tutoriel — {title}", "shot": None,
+                       "subtitle": section or "", "narration": intro}]
+            for i, st in enumerate(steps, 1):
+                s2 = {"badge": f"Étape {i}", "title": title, "shot": st["shot"],
+                      "narration": st.get("narration") or f"Étape {i}."}
+                if st.get("highlight"):
+                    s2["highlight"] = st["highlight"]
+                scenes.append(s2)
+            scenes.append({"badge": "", "title": "Tutoriel terminé", "shot": None,
+                           "subtitle": "Merci d'avoir suivi ce tutoriel", "narration": outro})
+            targets = sum(1 for st in steps if st.get("highlight"))
+            on_progress("spec", f"{len(steps)} écran(s) live · {targets} avec cible", 30,
+                        {"shots": len(steps), "targets": targets, "mode": "live"})
+        except Exception as e:
+            on_progress("extract", "Capture live indisponible → fallback PDF", 12,
+                        {"live_error": str(e)[:80]})
+            scenes = None
+
+    # --- Mode fallback PDF ---
+    if scenes is None:
+        on_progress("extract", "Extraction des captures du PDF", 12, {})
+        shots = _extract_shots(pdf_path, os.path.join(work_dir, "shots"))
+        if not shots:
+            raise RuntimeError("Aucune capture exploitable trouvée dans le PDF "
+                               "(images trop petites ou PDF sans capture).")
+        targets = sum(1 for s in shots if _has_target(s))
+        on_progress("extract", f"{len(shots)} capture(s) · {targets} avec cible", 22,
+                    {"shots": len(shots), "targets": targets, "mode": "pdf"})
+        on_progress("spec", "Préparation du script et de la narration", 30, {"shots": len(shots)})
+        raw = _clean(_pdf_text(pdf_path))
+        llm = generate_narration(title, raw, len(shots))
+        if llm:
+            narr = [_clean(s) for s in llm["steps"]]
+            intro = _clean(llm["intro"]) if llm.get("intro") else intro
+            outro = _clean(llm["outro"]) if llm.get("outro") else outro
+        else:
+            narr = _split_narration(raw, len(shots))
+        scenes = [{"badge": "", "title": f"Tutoriel — {title}", "shot": None,
+                   "subtitle": section or "", "narration": intro}]
+        for i, sh in enumerate(shots):
+            scenes.append({"badge": f"Étape {i + 1}", "title": title, "shot": sh,
+                           "narration": narr[i] or f"Étape {i + 1}."})
+        scenes.append({"badge": "", "title": "Tutoriel terminé", "shot": None,
+                       "subtitle": "Merci d'avoir suivi ce tutoriel", "narration": outro})
 
     # Garde-fou crédits ElevenLabs (si le solde est connu)
     needed = sum(len(s.get("narration") or "") for s in scenes)

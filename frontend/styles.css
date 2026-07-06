@@ -569,3 +569,19 @@ body{
 }
 .undo-btn:hover:not(:disabled){background:#f6f7fb;border-color:#d7daf0}
 .undo-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+/* ---------- Connexion Oplit (sidebar) + toggle live ---------- */
+.foot-reco{
+  border:none;background:rgba(255,255,255,.08);color:#cfd2e6;cursor:pointer;
+  width:30px;height:30px;border-radius:9px;font-size:15px;flex-shrink:0;transition:.15s;
+}
+.foot-reco:hover:not(:disabled){background:rgba(255,255,255,.16);color:#fff}
+.foot-reco:disabled{opacity:.4;cursor:not-allowed}
+.live-toggle{
+  display:flex;gap:10px;align-items:flex-start;margin-top:14px;cursor:pointer;
+  background:#f6f7fb;border:1px solid var(--line);border-radius:11px;padding:11px 13px;
+  font-size:12.5px;color:var(--ink-soft);line-height:1.45;transition:.15s;
+}
+.live-toggle input{margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--brand)}
+.live-toggle b{color:var(--ink)}
+.live-hint{font-size:11.5px;color:#b45309;margin-top:6px;min-height:14px}

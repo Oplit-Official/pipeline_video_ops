@@ -90,7 +90,33 @@ def _save_import(article):
     json.dump(items, open(IMPORTS_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 
-def _run_import(jid, pdf_path, title, section, category, category_icon):
+_OPLIT_LOGIN = {"running": False, "done_at": None}
+
+
+def _oplit_profile():
+    return os.environ.get("OPLIT_PROFILE",
+                          "/Users/mehdi/Desktop/tutorials_automation/build/pw-profile")
+
+
+def _oplit_status():
+    """Statut léger : profil de session présent & non vide (login déjà fait une fois)."""
+    prof = _oplit_profile()
+    connected = os.path.isdir(prof) and bool(os.listdir(prof))
+    return {"connected": connected, "logging_in": _OPLIT_LOGIN["running"]}
+
+
+def _run_oplit_login():
+    _OPLIT_LOGIN["running"] = True
+    try:
+        script = os.path.join(BASE_DIR, "video_engine", "scripts", "oplit_login.py")
+        subprocess.run([sys.executable, script], timeout=360)
+    except Exception:
+        pass
+    finally:
+        _OPLIT_LOGIN["running"] = False
+
+
+def _run_import(jid, pdf_path, title, section, category, category_icon, live=False):
     try:
         slug = import_pipeline.slugify(title) + "-" + jid[:6]
         work = os.path.join(IMPORTS_DIR, "_work", slug)
@@ -106,7 +132,7 @@ def _run_import(jid, pdf_path, title, section, category, category_icon):
         cred = eleven_credits()
         remaining = cred.get("remaining") if cred.get("ok") else None
         import_pipeline.build_video(pdf_path, title, section, work, out_mp4, cb,
-                                    remaining_chars=remaining)
+                                    remaining_chars=remaining, live=live)
 
         # durée réelle de la vidéo
         dur = None
@@ -157,6 +183,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(200, _load_imports())
         if path == "/api/eleven-credits":
             return self._json(200, eleven_credits())
+        if path == "/api/oplit-status":
+            return self._json(200, _oplit_status())
         if path == "/api/import-status":
             qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             jid = (qs.get("job") or [""])[0]
@@ -169,6 +197,8 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/import-exercise":
             return self._import_exercise()
+        if path == "/api/oplit-login":
+            return self._oplit_login()
         if path == "/api/rename-category":
             return self._rename_category()
         if path == "/api/update-import":
@@ -217,6 +247,7 @@ class Handler(SimpleHTTPRequestHandler):
             section = (body.get("section") or "").strip()
             category = (body.get("category") or "Mes imports").strip()
             category_icon = (body.get("category_icon") or "📥").strip()
+            live = bool(body.get("live"))
             b64 = body.get("pdf_base64") or ""
             if not title or not b64:
                 return self._json(400, {"error": "Titre et PDF requis."})
@@ -229,7 +260,7 @@ class Handler(SimpleHTTPRequestHandler):
                 f.write(pdf_bytes)
             _set_job(jid, phase="queued", label="En file d'attente…", pct=4)
             threading.Thread(target=_run_import,
-                             args=(jid, tmp_pdf, title, section, category, category_icon),
+                             args=(jid, tmp_pdf, title, section, category, category_icon, live),
                              daemon=True).start()
             return self._json(200, {"job": jid})
         except Exception as e:
@@ -296,6 +327,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(200, {"ok": True})
         except Exception as e:
             return self._json(500, {"error": str(e)})
+
+    def _oplit_login(self):
+        if _OPLIT_LOGIN["running"]:
+            return self._json(200, {"ok": True, "already": True})
+        threading.Thread(target=_run_oplit_login, daemon=True).start()
+        return self._json(200, {"ok": True})
 
     def _rename_category(self):
         try:
