@@ -5,20 +5,26 @@ Interface web pour la team Ops permettant de **composer des parcours de formatio
 combiné** d'un parcours, d'**envoyer** aux clients, et d'**importer un PDF pour en générer
 automatiquement une vidéo** (voix off ElevenLabs + captures).
 
-## Contenu du dépôt (code uniquement)
+## Structure du dépôt (code uniquement)
 
-| Fichier | Rôle |
+```
+frontend/       Interface web (index.html, app.js, styles.css, player.html, player.js, data.js)
+backend/        server.py · import_pipeline.py · make_parcours_pdf.py
+video_engine/   Moteur de fabrication des vidéos (scripts/, build_video.py, README)
+Dockerfile · render.yaml · requirements.txt · .env.example
+```
+
+| Élément | Rôle |
 |---|---|
-| `frontend/index.html` · `styles.css` · `app.js` | Interface (catalogue, sélection, gestion des vidéos, import) |
-| `frontend/player.html` · `player.js` | Lecteur de parcours vidéo + visionneuse PDF |
+| `frontend/` | Catalogue, sélection, gestion des vidéos, import, lecteur + visionneuse PDF |
 | `frontend/data.js` | Catalogue (catégories → sections → articles, liens vidéo/PDF/Drive) |
-| `server.py` | Backend stdlib : sert le statique + endpoints (PDF parcours, import, crédits ElevenLabs, gestion) |
-| `make_parcours_pdf.py` | Génère le PDF combiné (intro rédigée + articles caviardés + conclusion) |
-| `import_pipeline.py` | PDF → vidéo (réécriture de la narration via l'API Claude, moteur `make_helpdesk_video.py`) |
-| `tutorials_automation 2/scripts/` + `README.md` | Pipeline de fabrication des vidéos (moteur, captures, batch) |
+| `backend/server.py` | Serveur stdlib : sert `frontend/` + médias racine + endpoints (PDF parcours, import, crédits, gestion) |
+| `backend/make_parcours_pdf.py` | PDF combiné (intro rédigée + articles caviardés + conclusion) |
+| `backend/import_pipeline.py` | PDF → vidéo (narration réécrite via l'API Claude, appelle le moteur) |
+| `video_engine/scripts/` | Moteur vidéo (`make_helpdesk_video.py`, captures, batch) |
 
-> Les **médias** (vidéos `.mp4`, PDF FAQ, dossiers `video helpdesk`, `imports/`, artefacts de
-> build) ne sont **pas versionnés** (voir `.gitignore`) : ils restent locaux.
+> Les **médias** (vidéos `.mp4`, PDF FAQ, dossiers `video helpdesk…`, `Articles Helpdesk…`,
+> `imports/`, artefacts de build) ne sont **pas versionnés** (voir `.gitignore`) : ils restent locaux.
 
 ## Installation & lancement
 
@@ -26,7 +32,7 @@ automatiquement une vidéo** (voix off ElevenLabs + captures).
 pip install -r requirements.txt          # Pillow, reportlab, pypdf, numpy, scipy
 brew install ffmpeg poppler              # binaires système (macOS)
 cp .env.example .env                      # puis renseigner les clés dans .env
-python3 server.py                         # http://localhost:8765
+python3 backend/server.py                 # http://localhost:8765
 ```
 
 Il faut aussi récupérer les **médias** (dossiers `Articles Helpdesk…`, `video helpdesk…`),

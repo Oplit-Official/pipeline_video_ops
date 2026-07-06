@@ -19,4 +19,4 @@ COPY . .
 
 ENV PORT=8765
 EXPOSE 8765
-CMD ["python3", "server.py"]
+CMD ["python3", "backend/server.py"]

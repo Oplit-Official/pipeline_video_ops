@@ -12,7 +12,8 @@ from functools import partial
 from make_parcours_pdf import build_parcours
 import import_pipeline
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Racine du projet = parent de backend/ (front, médias, imports, .env y vivent)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _load_env(path):

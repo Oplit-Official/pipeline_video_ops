@@ -71,7 +71,8 @@ def generate_narration(title, full_text, n_steps):
         return None
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-ENGINE = os.path.join(BASE, "tutorials_automation 2", "scripts", "make_helpdesk_video.py")
+ROOT = os.path.dirname(BASE)   # racine projet (parent de backend/)
+ENGINE = os.path.join(ROOT, "video_engine", "scripts", "make_helpdesk_video.py")
 
 
 def _extract_shots(pdf, out):

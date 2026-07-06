@@ -24,13 +24,13 @@ Gestion et création des groupes de secteurs/
 # --- Symlink vers un autre projet ---
 lbast-webapp copie
 
-# --- Dans « tutorials_automation 2 » : ne garder que scripts + README ---
-tutorials_automation 2/*
-!tutorials_automation 2/scripts/
-tutorials_automation 2/scripts/*
-!tutorials_automation 2/scripts/*.py
-!tutorials_automation 2/README.md
-!tutorials_automation 2/build_video.py
+# --- Dans « video_engine » : ne garder que scripts + README + build_video.py ---
+video_engine/*
+!video_engine/scripts/
+video_engine/scripts/*
+!video_engine/scripts/*.py
+!video_engine/README.md
+!video_engine/build_video.py
 
 # --- Secrets ---
 .env
