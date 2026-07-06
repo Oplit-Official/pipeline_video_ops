@@ -29,6 +29,7 @@ def _load_env(path):
 
 _load_env(os.path.join(BASE_DIR, ".env"))
 
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 IMPORTS_DIR = os.environ.get("IMPORTS_DIR") or os.path.join(BASE_DIR, "imports")
 IMPORTS_JSON = os.path.join(IMPORTS_DIR, "imports.json")
 os.makedirs(IMPORTS_DIR, exist_ok=True)
@@ -138,7 +139,18 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def translate_path(self, path):
+        # sert d'abord depuis frontend/ (index, app.js…), sinon depuis la racine (médias)
+        default = super().translate_path(path)
+        rel = os.path.relpath(default, BASE_DIR)
+        cand = os.path.join(FRONTEND_DIR, rel)
+        if os.path.exists(cand):
+            return cand
+        return default
+
     def do_GET(self):
+        if self.path in ("/", ""):
+            self.path = "/index.html"
         path = self.path.split("?")[0]
         if path == "/api/imports":
             return self._json(200, _load_imports())

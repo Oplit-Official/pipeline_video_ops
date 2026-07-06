@@ -9,9 +9,9 @@ automatiquement une vidéo** (voix off ElevenLabs + captures).
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` / `styles.css` / `app.js` | Interface (catalogue, sélection, gestion des vidéos, import) |
-| `player.html` / `player.js` | Lecteur de parcours vidéo + visionneuse PDF |
-| `data.js` | Catalogue (catégories → sections → articles, liens vidéo/PDF/Drive) |
+| `frontend/index.html` · `styles.css` · `app.js` | Interface (catalogue, sélection, gestion des vidéos, import) |
+| `frontend/player.html` · `player.js` | Lecteur de parcours vidéo + visionneuse PDF |
+| `frontend/data.js` | Catalogue (catégories → sections → articles, liens vidéo/PDF/Drive) |
 | `server.py` | Backend stdlib : sert le statique + endpoints (PDF parcours, import, crédits ElevenLabs, gestion) |
 | `make_parcours_pdf.py` | Génère le PDF combiné (intro rédigée + articles caviardés + conclusion) |
 | `import_pipeline.py` | PDF → vidéo (réécriture de la narration via l'API Claude, moteur `make_helpdesk_video.py`) |
