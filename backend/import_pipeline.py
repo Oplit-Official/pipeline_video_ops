@@ -98,6 +98,20 @@ def _extract_shots(pdf, out):
     return shots
 
 
+def _has_target(shot_path):
+    """True si une cible magenta (encadré FAQ) est détectée -> curseur placé.
+    Réplique la détection du moteur (make_helpdesk_video.detect_target)."""
+    try:
+        import numpy as np
+        from scipy import ndimage
+        a = np.asarray(Image.open(shot_path).convert("RGB")).astype(int)
+        R, G, B = a[:, :, 0], a[:, :, 1], a[:, :, 2]
+        m = (R > 200) & (B > 200) & (G < 150) & (R - G > 90)
+        return bool(m.sum() >= 300)
+    except Exception:
+        return False
+
+
 def _pdf_text(pdf):
     try:
         return subprocess.run(["pdftotext", "-layout", pdf, "-"],
@@ -166,7 +180,9 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
     if not shots:
         raise RuntimeError("Aucune capture exploitable trouvée dans le PDF "
                            "(images trop petites ou PDF sans capture).")
-    on_progress("extract", f"{len(shots)} capture(s) extraite(s)", 22, {"shots": len(shots)})
+    targets = sum(1 for s in shots if _has_target(s))   # étapes où le curseur aura une cible
+    on_progress("extract", f"{len(shots)} capture(s) · {targets} avec cible", 22,
+                {"shots": len(shots), "targets": targets})
 
     on_progress("spec", "Préparation du script et de la narration", 30, {"shots": len(shots)})
     raw = _clean(_pdf_text(pdf_path))

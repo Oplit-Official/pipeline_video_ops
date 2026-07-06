@@ -626,8 +626,13 @@ $("#importLaunch").onclick = async () => {
       clearInterval(importPoll);
       setStep("done", 100);
       if (st.article) addImported(st.article);
-      toast("✅ Vidéo générée et ajoutée au catalogue !");
-      setTimeout(closeImport, 1400);
+      const n = st.shots, t = st.targets;
+      const detail = (n != null && t != null)
+        ? `🎯 ${t}/${n} étapes avec curseur ciblé · ${n - t} sans curseur`
+        : "";
+      $("#importHint").textContent = detail;
+      toast(`✅ Vidéo générée${detail ? " · " + detail : " et ajoutée au catalogue"}`);
+      setTimeout(closeImport, 2600);
     }
   }, 2000);
 };
