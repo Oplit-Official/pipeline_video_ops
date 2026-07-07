@@ -5,7 +5,7 @@ karaoké, curseur auto sur le magenta). Reporte l'avancement via un callback.
 
 build_video(pdf_path, title, section, work_dir, out_mp4, on_progress) -> out_mp4
 """
-import os, re, glob, shutil, subprocess, json, unicodedata, urllib.request, urllib.error
+import os, re, glob, shutil, subprocess, json, unicodedata, urllib.request, urllib.error, base64, io
 from PIL import Image
 
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
@@ -96,6 +96,48 @@ def _extract_shots(pdf, out):
             shots.append(dst)
     shutil.rmtree(tmp)
     return shots
+
+
+def locate_click(image_path, context=""):
+    """Vision Claude : renvoie (fx, fy) du point à cliquer sur la capture, ou None.
+    Coordonnées en fractions (0-1) de largeur/hauteur."""
+    key = _anthropic_key()
+    if not key:
+        return None
+    try:
+        im = Image.open(image_path).convert("RGB")
+        im.thumbnail((1100, 1100))                     # réduit le coût tokens
+        buf = io.BytesIO(); im.save(buf, "JPEG", quality=82)
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        prompt = (
+            "Voici la capture d'écran d'une étape d'un tutoriel du logiciel Oplit.\n"
+            f"Contexte de l'étape : « {context} ».\n"
+            "Indique le point précis où l'utilisateur doit CLIQUER (l'élément d'action "
+            "principal de cette étape : bouton, champ, icône, entrée de menu, encadré rose s'il "
+            "y en a un). Réponds UNIQUEMENT en JSON : "
+            '{"found": true, "x": 0.0-1.0, "y": 0.0-1.0} en fractions de la largeur (x) et de '
+            'la hauteur (y). Si aucune action de clic n\'est pertinente, {"found": false}.')
+        body = json.dumps({
+            "model": ANTHROPIC_MODEL, "max_tokens": 120,
+            "messages": [{"role": "user", "content": [
+                {"type": "image", "source": {"type": "base64",
+                                             "media_type": "image/jpeg", "data": b64}},
+                {"type": "text", "text": prompt}]}],
+        }).encode()
+        req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body,
+                                     headers={"x-api-key": key, "anthropic-version": "2023-06-01",
+                                              "content-type": "application/json"})
+        with urllib.request.urlopen(req, timeout=45) as r:
+            data = json.load(r)
+        txt = "".join(b.get("text", "") for b in data.get("content", []))
+        txt = re.sub(r"^```(?:json)?|```$", "", txt.strip(), flags=re.M).strip()
+        obj = json.loads(txt)
+        if obj.get("found") and obj.get("x") is not None and obj.get("y") is not None:
+            x = min(1.0, max(0.0, float(obj["x"]))); y = min(1.0, max(0.0, float(obj["y"])))
+            return (x, y)
+    except Exception:
+        pass
+    return None
 
 
 def _has_target(shot_path):
@@ -224,10 +266,9 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
         if not shots:
             raise RuntimeError("Aucune capture exploitable trouvée dans le PDF "
                                "(images trop petites ou PDF sans capture).")
-        targets = sum(1 for s in shots if _has_target(s))
-        on_progress("extract", f"{len(shots)} capture(s) · {targets} avec cible", 22,
-                    {"shots": len(shots), "targets": targets, "mode": "pdf"})
-        on_progress("spec", "Préparation du script et de la narration", 30, {"shots": len(shots)})
+        on_progress("extract", f"{len(shots)} capture(s) extraite(s)", 22,
+                    {"shots": len(shots), "mode": "pdf"})
+        on_progress("spec", "Préparation du script et de la narration", 28, {"shots": len(shots)})
         raw = _clean(_pdf_text(pdf_path))
         llm = generate_narration(title, raw, len(shots))
         if llm:
@@ -236,13 +277,24 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
             outro = _clean(llm["outro"]) if llm.get("outro") else outro
         else:
             narr = _split_narration(raw, len(shots))
+        # Vision Claude : point de clic précis par capture (sinon repli magenta du moteur)
         scenes = [{"badge": "", "title": f"Tutoriel — {title}", "shot": None,
                    "subtitle": section or "", "narration": intro}]
+        targets = 0
         for i, sh in enumerate(shots):
-            scenes.append({"badge": f"Étape {i + 1}", "title": title, "shot": sh,
-                           "narration": narr[i] or f"Étape {i + 1}."})
+            on_progress("spec", f"Analyse visuelle des captures… ({i + 1}/{len(shots)})", 30,
+                        {"shots": len(shots)})
+            sc2 = {"badge": f"Étape {i + 1}", "title": title, "shot": sh,
+                   "narration": narr[i] or f"Étape {i + 1}."}
+            tgt = locate_click(sh, narr[i] if i < len(narr) else "")
+            if tgt:
+                sc2["target"] = {"fx": tgt[0], "fy": tgt[1]}
+                targets += 1
+            scenes.append(sc2)
         scenes.append({"badge": "", "title": "Tutoriel terminé", "shot": None,
                        "subtitle": "Merci d'avoir suivi ce tutoriel", "narration": outro})
+        on_progress("spec", f"{len(shots)} capture(s) · {targets} cible(s) (vision)", 34,
+                    {"shots": len(shots), "targets": targets, "mode": "pdf"})
 
     # Garde-fou crédits ElevenLabs (si le solde est connu)
     needed = sum(len(s.get("narration") or "") for s in scenes)
