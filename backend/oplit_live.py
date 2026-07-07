@@ -45,10 +45,14 @@ def deduce_script(title, full_text, max_steps=6):
         f"Pour chaque étape, choisis la ROUTE de l'application Oplit la plus pertinente "
         f"STRICTEMENT dans cette liste :\n{routes_desc}\n\n"
         f"Réponds UNIQUEMENT en JSON :\n"
-        f'{{"intro":"...","outro":"...","steps":[{{"route":"/parameters/...","button":"Texte exact du bouton à cliquer ou \\"\\"","narration":"..."}}]}}\n'
-        f"Contraintes : 3 à {max_steps} étapes, `route` OBLIGATOIREMENT dans la liste, "
-        f"`button` = libellé exact d'un bouton visible (ex. « Ajouter un paramètre ») ou vide, "
-        f"`narration` = 1 à 2 phrases.\n\nTEXTE :\n{full_text[:6000]}"
+        f'{{"intro":"...","outro":"...","steps":[{{"route":"/parameters/...","button":"libellé exact d\'un élément cliquable","narration":"..."}}]}}\n'
+        f"Contraintes : 3 à {max_steps} étapes, `route` OBLIGATOIREMENT dans la liste.\n"
+        f"`button` : indique TOUJOURS un élément cliquable **visible** à l'écran, avec son "
+        f"libellé EXACT. Privilégie, dans l'ordre : un bouton d'action (« Ajouter un paramètre », "
+        f"« Créer une nouvelle règle », « Enregistrer »), un onglet, ou à défaut l'entrée du "
+        f"**menu de gauche** correspondant à la route (ex. « Liste des paramètres », « Structure "
+        f"usine », « Règles de calcul », « Import des données »). Ne laisse `button` vide QUE si "
+        f"vraiment aucune action.\n`narration` = 1 à 2 phrases.\n\nTEXTE :\n{full_text[:6000]}"
     )
     body = json.dumps({"model": ip.ANTHROPIC_MODEL, "max_tokens": 1600,
                        "messages": [{"role": "user", "content": prompt}]}).encode()
@@ -75,19 +79,26 @@ def deduce_script(title, full_text, max_steps=6):
         return None
 
 
-# JS : rect (fractions du viewport) d'un bouton par son texte exact
+# JS : rect (fractions du viewport) d'un bouton par son texte (tolérant)
 _JS_BTN = """([label, VW, VH]) => {
-    if (!label) return null;
-    const els = Array.from(document.querySelectorAll('a,button,div,span,li'))
-        .filter(e => (e.textContent||'').trim() === label);
-    els.sort((a,b) => { const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
-        return (ra.width*ra.height)-(rb.width*rb.height); });
-    for (const e of els) {
+    const norm = s => (s||'').replace(/\\s+/g,' ').trim().toLowerCase();
+    let want = norm(label).replace(/^[+•\\-–\\s]+/,'');   // enlève un "+" éventuel
+    if (!want) return null;
+    const sel = 'button, a, [role=button], [type=button], .btn, input[type=submit], li, span, div';
+    let best = null, bestArea = Infinity;
+    for (const e of document.querySelectorAll(sel)) {
+        const t = norm(e.textContent);
+        if (!t) continue;
+        const match = (t === want) || t.includes(want) || want.includes(t);
+        if (!match) continue;
+        if (Math.abs(t.length - want.length) > 30) continue;  // évite les gros conteneurs
         const r = e.getBoundingClientRect();
-        if (r.width>20 && r.width<500 && r.height>10 && r.height<80)
-            return {fx:r.left/VW, fy:r.top/VH, fw:r.width/VW, fh:r.height/VH};
+        if (r.width < 18 || r.width > 560 || r.height < 10 || r.height > 96) continue;
+        if (r.top < 0 || r.left < 0) continue;
+        const area = r.width * r.height;
+        if (area < bestArea) { bestArea = area; best = r; }
     }
-    return null;
+    return best ? {fx:best.left/VW, fy:best.top/VH, fw:best.width/VW, fh:best.height/VH} : null;
 }"""
 
 

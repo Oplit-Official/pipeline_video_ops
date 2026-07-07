@@ -194,6 +194,10 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
             on_progress("extract", f"Capture live de {len(sc['steps'])} écran(s) Oplit…", 22,
                         {"shots": len(sc["steps"])})
             steps, _ = ol.capture_live(sc["steps"], os.path.join(work_dir, "shots"))
+            targets = sum(1 for st in steps if st.get("highlight"))
+            # trop peu d'encadrés/curseurs -> on préfère le PDF (encadrés roses déjà présents)
+            if targets < max(1, round(len(steps) * 0.5)):
+                raise RuntimeError(f"peu de cibles en live ({targets}/{len(steps)})")
             intro = sc.get("intro") or intro
             outro = sc.get("outro") or outro
             scenes = [{"badge": "", "title": f"Tutoriel — {title}", "shot": None,
@@ -206,7 +210,6 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
                 scenes.append(s2)
             scenes.append({"badge": "", "title": "Tutoriel terminé", "shot": None,
                            "subtitle": "Merci d'avoir suivi ce tutoriel", "narration": outro})
-            targets = sum(1 for st in steps if st.get("highlight"))
             on_progress("spec", f"{len(steps)} écran(s) live · {targets} avec cible", 30,
                         {"shots": len(steps), "targets": targets, "mode": "live"})
         except Exception as e:
