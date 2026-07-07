@@ -253,8 +253,9 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
     spec_path = os.path.join(work_dir, "spec.json")
     json.dump(spec, open(spec_path, "w"), ensure_ascii=False, indent=2)
 
+    nsteps = max(0, len(scenes) - 2)   # scènes hors carton intro/outro
     on_progress("render", "Voix (ElevenLabs) + montage vidéo", 45,
-                {"shots": len(shots), "scenes": len(scenes)})
+                {"shots": nsteps, "targets": targets, "scenes": len(scenes)})
     env = dict(os.environ, TTS="eleven", MUTE="0")
     r = subprocess.run(["python3", ENGINE, spec_path],
                        env=env, capture_output=True, text=True)
@@ -263,7 +264,7 @@ def build_video(pdf_path, title, section, work_dir, out_mp4, on_progress=lambda 
         raise RuntimeError(f"Montage échoué : {last[:200]}")
     if not os.path.exists(out_mp4):
         raise RuntimeError("La vidéo n'a pas été produite.")
-    on_progress("done", "Vidéo prête", 100, {"shots": len(shots)})
+    on_progress("done", "Vidéo prête", 100, {"shots": nsteps, "targets": targets})
     return out_mp4
 
 
