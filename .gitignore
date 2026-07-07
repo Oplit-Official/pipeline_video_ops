@@ -24,13 +24,13 @@ Gestion et création des groupes de secteurs/
 # --- Symlink vers un autre projet ---
 lbast-webapp copie
 
-# --- Dans « video_engine » : ne garder que scripts + README + build_video.py ---
-video_engine/*
-!video_engine/scripts/
-video_engine/scripts/*
-!video_engine/scripts/*.py
-!video_engine/README.md
-!video_engine/build_video.py
+# --- Dans « backend/video_engine » : ne garder que scripts + README + build_video.py ---
+backend/video_engine/*
+!backend/video_engine/scripts/
+backend/video_engine/scripts/*
+!backend/video_engine/scripts/*.py
+!backend/video_engine/README.md
+!backend/video_engine/build_video.py
 
 # --- Secrets ---
 .env

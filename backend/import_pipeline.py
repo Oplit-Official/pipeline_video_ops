@@ -70,9 +70,8 @@ def generate_narration(title, full_text, n_steps):
     except Exception:
         return None
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(BASE)   # racine projet (parent de backend/)
-ENGINE = os.path.join(ROOT, "video_engine", "scripts", "make_helpdesk_video.py")
+BASE = os.path.dirname(os.path.abspath(__file__))   # backend/
+ENGINE = os.path.join(BASE, "video_engine", "scripts", "make_helpdesk_video.py")
 
 
 def _extract_shots(pdf, out):

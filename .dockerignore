@@ -20,6 +20,6 @@ video helpdesk/
 video helpdesk - V1/
 Articles Helpdesk pour alimentation IA/
 Gestion et création des groupes de secteurs/
-video_engine/**/*.mp4
-video_engine/build/
+backend/video_engine/**/*.mp4
+backend/video_engine/build/
 lbast-webapp copie

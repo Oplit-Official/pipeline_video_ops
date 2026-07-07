@@ -108,7 +108,7 @@ def _oplit_status():
 def _run_oplit_login():
     _OPLIT_LOGIN["running"] = True
     try:
-        script = os.path.join(BASE_DIR, "video_engine", "scripts", "oplit_login.py")
+        script = os.path.join(BASE_DIR, "backend", "video_engine", "scripts", "oplit_login.py")
         subprocess.run([sys.executable, script], timeout=360)
     except Exception:
         pass

@@ -8,9 +8,9 @@ automatiquement une vidéo** (voix off ElevenLabs + captures).
 ## Structure du dépôt (code uniquement)
 
 ```
-frontend/       Interface web (index.html, app.js, styles.css, player.html, player.js, data.js)
-backend/        server.py · import_pipeline.py · make_parcours_pdf.py
-video_engine/   Moteur de fabrication des vidéos (scripts/, build_video.py, README)
+frontend/            Interface web (index.html, app.js, styles.css, player.html, player.js, data.js)
+backend/             server.py · import_pipeline.py · make_parcours_pdf.py · oplit_live.py
+backend/video_engine/  Moteur de fabrication des vidéos (scripts/, build_video.py, README)
 Dockerfile · render.yaml · requirements.txt · .env.example
 ```
 
@@ -21,7 +21,7 @@ Dockerfile · render.yaml · requirements.txt · .env.example
 | `backend/server.py` | Serveur stdlib : sert `frontend/` + médias racine + endpoints (PDF parcours, import, crédits, gestion) |
 | `backend/make_parcours_pdf.py` | PDF combiné (intro rédigée + articles caviardés + conclusion) |
 | `backend/import_pipeline.py` | PDF → vidéo (narration réécrite via l'API Claude, appelle le moteur) |
-| `video_engine/scripts/` | Moteur vidéo (`make_helpdesk_video.py`, captures, batch) |
+| `backend/video_engine/scripts/` | Moteur vidéo (`make_helpdesk_video.py`, captures, batch) |
 
 > Les **médias** (vidéos `.mp4`, PDF FAQ, dossiers `video helpdesk…`, `Articles Helpdesk…`,
 > `imports/`, artefacts de build) ne sont **pas versionnés** (voir `.gitignore`) : ils restent locaux.
