@@ -5,7 +5,7 @@
 
 Lancement :  python3 server.py [port]   (défaut 8765)
 """
-import os, sys, json, tempfile, urllib.parse, urllib.request, urllib.error, base64, threading, time, uuid, re, shutil, subprocess
+import os, sys, json, tempfile, urllib.parse, urllib.request, urllib.error, base64, threading, time, uuid, re, shutil, subprocess, hashlib
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 
@@ -29,6 +29,42 @@ def _load_env(path):
 
 
 _load_env(os.path.join(BASE_DIR, ".env"))
+
+# --- Accès protégé par mot de passe (optionnel) : APP_PASSWORD dans .env ---
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "").strip()
+AUTH_TOKEN = hashlib.sha256(APP_PASSWORD.encode()).hexdigest() if APP_PASSWORD else None
+
+LOGIN_HTML = """<!doctype html><html lang=fr><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Oplit · Studio Ops — Connexion</title>
+<style>
+  *{box-sizing:border-box;margin:0;font-family:-apple-system,Inter,system-ui,sans-serif}
+  body{min-height:100vh;display:grid;place-items:center;background:#0f1020;color:#eef0ff}
+  .box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;
+       padding:34px 30px;width:340px;text-align:center;box-shadow:0 30px 70px -30px #000}
+  .logo{width:46px;height:46px;border-radius:13px;margin:0 auto 16px;display:grid;place-items:center;
+        font-weight:800;font-size:24px;color:#fff;background:linear-gradient(135deg,#5b4bff,#8b5cf6)}
+  h1{font-size:19px;margin-bottom:6px}p{color:#9498bd;font-size:13px;margin-bottom:20px}
+  input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid rgba(255,255,255,.15);
+        background:#15172b;color:#fff;font-size:15px;outline:none}
+  input:focus{border-color:#8b5cf6}
+  button{width:100%;margin-top:12px;padding:12px;border:none;border-radius:11px;cursor:pointer;
+         font-size:15px;font-weight:700;color:#fff;background:linear-gradient(135deg,#5b4bff,#8b5cf6)}
+  .err{color:#f25f8a;font-size:12.5px;margin-top:10px;min-height:16px}
+</style></head><body>
+  <form class=box onsubmit="return go(event)">
+    <div class=logo>O</div><h1>Studio Ops</h1><p>Accès protégé — entrez le mot de passe.</p>
+    <input id=pw type=password placeholder="Mot de passe" autofocus autocomplete=current-password>
+    <button>Entrer</button><div class=err id=err></div>
+  </form>
+  <script>
+  async function go(e){e.preventDefault();
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:document.getElementById('pw').value})});
+    if(r.ok){location.reload();}else{document.getElementById('err').textContent='Mot de passe incorrect.';}
+    return false;}
+  </script>
+</body></html>"""
 
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 IMPORTS_DIR = os.environ.get("IMPORTS_DIR") or os.path.join(BASE_DIR, "imports")
@@ -166,6 +202,33 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _authed(self):
+        if not AUTH_TOKEN:
+            return True
+        m = re.search(r"ops_auth=([a-f0-9]+)", self.headers.get("Cookie", ""))
+        return bool(m and m.group(1) == AUTH_TOKEN)
+
+    def _send_login(self):
+        body = LOGIN_HTML.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _login(self):
+        b = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or "{}")
+        ok = AUTH_TOKEN and hashlib.sha256((b.get("password") or "").encode()).hexdigest() == AUTH_TOKEN
+        if not ok:
+            return self._json(401, {"error": "Mot de passe incorrect."})
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Set-Cookie", f"ops_auth={AUTH_TOKEN}; Path=/; HttpOnly; SameSite=Lax")
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def translate_path(self, path):
         # sert d'abord depuis frontend/ (index, app.js…), sinon depuis la racine (médias)
         default = super().translate_path(path)
@@ -176,6 +239,8 @@ class Handler(SimpleHTTPRequestHandler):
         return default
 
     def do_GET(self):
+        if AUTH_TOKEN and not self._authed():
+            return self._send_login()          # non authentifié -> page de login
         if self.path in ("/", ""):
             self.path = "/index.html"
         path = self.path.split("?")[0]
@@ -195,6 +260,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?")[0]
+        if path == "/api/login":
+            return self._login()
+        if AUTH_TOKEN and not self._authed():
+            return self._json(401, {"error": "non autorisé"})
         if path == "/api/import-exercise":
             return self._import_exercise()
         if path == "/api/oplit-login":
