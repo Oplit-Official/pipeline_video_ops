@@ -927,3 +927,18 @@ $("#oplitReco").onclick = async () => {
 };
 
 refreshOplit();
+
+// ====== Ajouter une catégorie depuis le menu principal ======
+$("#addCatBtn").onclick = () => {
+  const name = (prompt("Nom de la nouvelle catégorie :") || "").trim();
+  if (!name) return;
+  if (CATALOG.some((c) => c.name === name)) { toast("⚠️  Cette catégorie existe déjà."); return; }
+  const icon = ((prompt("Emoji de la catégorie (optionnel) :", "📁") || "📁").trim()) || "📁";
+  customCats.push({ id: "cat-" + Date.now(), name, icon });
+  persistCats();
+  mergeCustomCats();
+  const cat = CATALOG.find((c) => c.name === name);
+  if (cat) activeCat = cat.id;   // bascule sur la nouvelle catégorie
+  render();
+  toast(`✅ Catégorie « ${name} » ajoutée.`);
+};

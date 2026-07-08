@@ -585,3 +585,12 @@ body{
 .live-toggle input{margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--brand)}
 .live-toggle b{color:var(--ink)}
 .live-hint{font-size:11.5px;color:#b45309;margin-top:6px;min-height:14px}
+
+/* ---------- Bouton "Ajouter une catégorie" (sidebar) ---------- */
+.add-cat-btn{
+  display:flex;align-items:center;gap:9px;width:100%;margin-top:6px;
+  border:1px dashed rgba(255,255,255,.18);background:transparent;color:#aeb2cf;
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  padding:10px 12px;border-radius:11px;transition:.15s;
+}
+.add-cat-btn:hover{background:rgba(255,255,255,.05);color:#fff;border-color:rgba(255,255,255,.3)}
