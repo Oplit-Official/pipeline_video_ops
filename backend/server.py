@@ -38,6 +38,7 @@ AUTH_TOKEN = hashlib.sha256(APP_PASSWORD.encode()).hexdigest() if APP_PASSWORD e
 LOGIN_HTML = """<!doctype html><html lang=fr><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>Oplit · Studio Ops — Connexion</title>
+<link rel="icon" type="image/svg+xml" href="__FAVICON__">
 <style>
   *{box-sizing:border-box;margin:0;font-family:-apple-system,Inter,system-ui,sans-serif}
   body{min-height:100vh;display:grid;place-items:center;background:#0f1020;color:#eef0ff}
@@ -228,8 +229,27 @@ class Handler(SimpleHTTPRequestHandler):
         m = re.search(r"ops_auth=([a-f0-9]+)", self.headers.get("Cookie", ""))
         return bool(m and m.group(1) == AUTH_TOKEN)
 
+    def _favicon_data_uri(self):
+        try:
+            with open(os.path.join(FRONTEND_DIR, "favicon.svg"), "rb") as f:
+                return "data:image/svg+xml;base64," + base64.b64encode(f.read()).decode()
+        except Exception:
+            return ""
+
+    def _send_favicon(self):
+        try:
+            with open(os.path.join(FRONTEND_DIR, "favicon.svg"), "rb") as f:
+                body = f.read()
+        except Exception:
+            return self.send_error(404)
+        self.send_response(200)
+        self.send_header("Content-Type", "image/svg+xml")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _send_login(self):
-        body = LOGIN_HTML.encode("utf-8")
+        body = LOGIN_HTML.replace("__FAVICON__", self._favicon_data_uri()).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -259,6 +279,8 @@ class Handler(SimpleHTTPRequestHandler):
         return default
 
     def do_GET(self):
+        if self.path.split("?")[0] in ("/favicon.svg", "/favicon.ico"):
+            return self._send_favicon()         # favicon accessible même sans login
         if AUTH_TOKEN and not self._authed():
             return self._send_login()          # non authentifié -> page de login
         if self.path in ("/", ""):
