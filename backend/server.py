@@ -11,6 +11,7 @@ from functools import partial
 
 from make_parcours_pdf import build_parcours
 import import_pipeline
+import supa
 
 # Racine du projet = parent de backend/ (front, médias, imports, .env y vivent)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -112,6 +113,11 @@ def _set_job(jid, **kw):
 
 
 def _load_imports():
+    if supa.enabled():
+        try:
+            return supa.db_list()
+        except Exception:
+            return []
     if os.path.exists(IMPORTS_JSON):
         try:
             return json.load(open(IMPORTS_JSON, encoding="utf-8"))
@@ -121,6 +127,9 @@ def _load_imports():
 
 
 def _save_import(article):
+    if supa.enabled():
+        supa.db_insert(article)
+        return
     items = _load_imports()
     items.append(article)
     json.dump(items, open(IMPORTS_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
@@ -180,12 +189,23 @@ def _run_import(jid, pdf_path, title, section, category, category_icon, live=Fal
         except Exception:
             pass
 
+        video_ref = os.path.relpath(out_mp4, BASE_DIR)
+        pdf_ref = os.path.relpath(pdf_dst, BASE_DIR)
+        # Supabase Storage : upload -> URLs publiques (sinon on garde les chemins locaux)
+        if supa.enabled():
+            try:
+                _set_job(jid, phase="render", label="Envoi vers Supabase…", pct=92)
+                video_ref = supa.upload(out_mp4, slug + ".mp4", "video/mp4")
+                pdf_ref = supa.upload(pdf_dst, slug + ".pdf", "application/pdf")
+            except Exception as e:
+                _set_job(jid, phase="render", label=f"Supabase indisponible ({str(e)[:40]}) — stockage local", pct=95)
+
         article = {
             "id": "imp-" + jid[:8], "title": title, "section": section or "Importé",
             "category": category or "Mes imports", "icon": category_icon or "📥",
             "dur": dur, "min": max(1, round(dur / 60)) if dur else 3,
-            "video": os.path.relpath(out_mp4, BASE_DIR),
-            "pdf": os.path.relpath(pdf_dst, BASE_DIR),
+            "video": video_ref,
+            "pdf": pdf_ref,
         }
         _save_import(article)
         _set_job(jid, phase="done", label="Vidéo prête", pct=100, article=article)
@@ -338,13 +358,16 @@ class Handler(SimpleHTTPRequestHandler):
     def _update_import(self):
         try:
             b = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or "{}")
+            fields = {k: str(b[k]).strip() for k in ("title", "section", "category", "icon")
+                      if b.get(k) is not None and str(b[k]).strip()}
+            if supa.enabled():
+                supa.db_update(b.get("id"), fields)
+                return self._json(200, {"ok": True})
             items = _load_imports()
             art = next((it for it in items if it.get("id") == b.get("id")), None)
             if not art:
                 return self._json(404, {"error": "import introuvable"})
-            for k in ("title", "section", "category", "icon"):
-                if b.get(k) is not None and str(b[k]).strip():
-                    art[k] = str(b[k]).strip()
+            art.update(fields)
             json.dump(items, open(IMPORTS_JSON, "w", encoding="utf-8"),
                       ensure_ascii=False, indent=2)
             return self._json(200, {"ok": True, "article": art})
@@ -354,6 +377,9 @@ class Handler(SimpleHTTPRequestHandler):
     def _delete_import(self):
         try:
             b = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or "{}")
+            if supa.enabled():
+                supa.db_delete(b.get("id"))   # (les fichiers restent dans le bucket)
+                return self._json(200, {"ok": True})
             items = _load_imports()
             art = next((it for it in items if it.get("id") == b.get("id")), None)
             if not art:
@@ -363,7 +389,7 @@ class Handler(SimpleHTTPRequestHandler):
             os.makedirs(trash, exist_ok=True)
             for key in ("video", "pdf"):
                 rel = art.get(key)
-                if rel:
+                if rel and not rel.startswith("http"):
                     p = os.path.realpath(os.path.join(BASE_DIR, rel))
                     if p.startswith(os.path.realpath(IMPORTS_DIR)) and os.path.isfile(p):
                         shutil.move(p, os.path.join(trash, os.path.basename(p)))
@@ -380,6 +406,9 @@ class Handler(SimpleHTTPRequestHandler):
             art = b.get("article")
             if not art:
                 return self._json(400, {"error": "article requis"})
+            if supa.enabled():
+                supa.db_insert(art)   # ré-insère la ligne (fichiers toujours dans le bucket)
+                return self._json(200, {"ok": True})
             trash = os.path.join(IMPORTS_DIR, "_trash")
             for key in ("video", "pdf"):
                 rel = art.get(key)
@@ -411,6 +440,9 @@ class Handler(SimpleHTTPRequestHandler):
             icon = b.get("icon")
             if not old or not new:
                 return self._json(400, {"error": "old/new requis"})
+            if supa.enabled():
+                supa.db_rename_category(old, new, icon)
+                return self._json(200, {"ok": True})
             items = _load_imports()
             for it in items:
                 if it.get("category") == old:

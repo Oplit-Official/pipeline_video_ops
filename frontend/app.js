@@ -20,6 +20,8 @@ const $ = (s) => document.querySelector(s);
 const catById = (id) => CATALOG.find((c) => c.id === id);
 // Encode un chemin (avec sous-dossiers) en URL servie par le serveur
 const encPath = (p) => p.split("/").map(encodeURIComponent).join("/");
+// URL média : absolue (Supabase) telle quelle, sinon chemin local encodé
+const mediaURL = (p) => (/^https?:\/\//.test(p || "") ? p : encPath(p));
 const fmtTime = (m) => (m >= 60 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}` : `${m}`);
 const fmtDur = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;  // mm:ss
 
@@ -72,7 +74,7 @@ function makeCard(e, cat) {
   if (hasVideo) {
     card.querySelector(".video-badge").onclick = (ev) => {
       ev.stopPropagation();
-      window.open(encPath(e.video), "_blank");
+      window.open(mediaURL(e.video), "_blank");
     };
   }
   card.querySelector(".card-manage").onclick = (ev) => { ev.stopPropagation(); openManage(e, cat); };

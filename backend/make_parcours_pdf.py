@@ -270,7 +270,13 @@ def redact_pdf(src, dst):
 
 def resolve_path(rel, base):
     """Résout un chemin (relatif à `base`, séparateur '/') vers le fichier réel,
-    en tolérant les différences d'encodage Unicode (NFC/NFD) sur les accents."""
+    en tolérant les différences d'encodage Unicode (NFC/NFD) sur les accents.
+    Télécharge d'abord si c'est une URL http (ex. Supabase Storage)."""
+    if isinstance(rel, str) and rel.startswith("http"):
+        import urllib.request
+        dst = os.path.join(tempfile.mkdtemp(), "article.pdf")
+        urllib.request.urlretrieve(rel, dst)
+        return dst
     if os.path.isabs(rel) and os.path.isfile(rel):
         return rel
     parts = [p for p in rel.replace("\\", "/").split("/") if p not in ("", ".")]

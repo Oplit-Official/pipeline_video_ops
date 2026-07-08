@@ -59,7 +59,18 @@ docker build -t pipeline-video-ops . && docker run -p 8765:8765 --env-file .env 
 ## Clés (dans `.env`, jamais committé)
 
 - `ELEVENLABS_API_KEY` — voix off des vidéos importées (requis pour l'import)
-- `ANTHROPIC_API_KEY` — réécriture des scripts de narration (optionnel, repli sinon)
+- `ANTHROPIC_API_KEY` — réécriture des scripts + vision (position du curseur) + routes live (optionnel)
+- `APP_PASSWORD` — protège l'accès à l'interface (optionnel, vide = libre)
+- `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` / `SUPABASE_BUCKET` — stockage des vidéos/PDF (optionnel)
+
+## Stockage Supabase (optionnel)
+
+Sans config → les imports restent dans `imports/` en local. Avec Supabase :
+1. **Storage** → créer un bucket **public** (`videos`).
+2. **SQL Editor** → exécuter `backend/supabase_setup.sql` (crée la table `imports`).
+3. Renseigner `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (service_role), `SUPABASE_BUCKET` dans `.env`.
+
+À l'import : le `.mp4` + `.pdf` sont **uploadés dans le bucket** et la fiche est **enregistrée dans la table** ; l'interface lit tout depuis Supabase.
 
 Le serveur charge automatiquement le `.env` au démarrage ; à défaut il lit aussi
 `~/.config/elevenlabs/key` et `~/.config/anthropic/key`, ou les variables d'environnement.

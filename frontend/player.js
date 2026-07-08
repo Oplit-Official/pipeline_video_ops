@@ -37,14 +37,16 @@ function renderPlaylist() {
   });
 }
 
-// Encode un chemin (avec dossiers) en URL servie par http.server
+// Encode un chemin (avec dossiers) en URL servie par le serveur
 const encPath = (p) => p.split("/").map(encodeURIComponent).join("/");
+// URL média : absolue (Supabase) telle quelle, sinon chemin local encodé
+const mediaURL = (p) => (/^https?:\/\//.test(p || "") ? p : encPath(p));
 
 function load(i) {
   if (i < 0 || i >= queue.length) return;
   idx = i;
   const q = queue[i];
-  video.src = encPath(q.video);
+  video.src = mediaURL(q.video);
   video.play().catch(() => {});
   $("#stageTitle").textContent = q.title;
   $("#stageCat").textContent = `${q.cat || ""}${q.section ? "  ·  " + q.section : ""}`;
@@ -67,7 +69,7 @@ const pdfOverlay = $("#pdfOverlay");
 function openPdf() {
   const q = queue[idx];
   if (!q || !q.pdf) return;
-  const url = encPath(q.pdf);
+  const url = mediaURL(q.pdf);
   $("#pdfTitle").textContent = q.title;
   $("#pdfFrame").src = url;
   $("#pdfOpen").href = url;
