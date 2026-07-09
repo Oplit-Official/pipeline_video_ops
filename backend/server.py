@@ -9,10 +9,6 @@ import os, sys, json, tempfile, urllib.parse, urllib.request, urllib.error, base
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 
-from make_parcours_pdf import build_parcours
-import import_pipeline
-import supa
-
 # Racine du projet = parent de backend/ (front, médias, imports, .env y vivent)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -29,7 +25,12 @@ def _load_env(path):
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
+# IMPORTANT : charger le .env AVANT d'importer supa/import_pipeline (qui lisent l'env à l'import)
 _load_env(os.path.join(BASE_DIR, ".env"))
+
+from make_parcours_pdf import build_parcours   # noqa: E402
+import import_pipeline                          # noqa: E402
+import supa                                     # noqa: E402
 
 # --- Accès protégé par mot de passe (optionnel) : APP_PASSWORD dans .env ---
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "").strip()
