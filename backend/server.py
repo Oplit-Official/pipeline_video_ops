@@ -144,11 +144,19 @@ def _oplit_profile():
                           "/Users/mehdi/Desktop/tutorials_automation/build/pw-profile")
 
 
+def _oplit_available():
+    """Capture live possible ? (navigateur Chrome/Chromium présent). Faux sur serveur headless."""
+    return bool(shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+                or shutil.which("chromium") or shutil.which("chromium-browser")
+                or os.path.exists("/Applications/Google Chrome.app"))
+
+
 def _oplit_status():
-    """Statut léger : profil de session présent & non vide (login déjà fait une fois)."""
+    """Statut léger : navigateur dispo + profil de session présent (login déjà fait)."""
     prof = _oplit_profile()
     connected = os.path.isdir(prof) and bool(os.listdir(prof))
-    return {"connected": connected, "logging_in": _OPLIT_LOGIN["running"]}
+    return {"available": _oplit_available(),
+            "connected": connected, "logging_in": _OPLIT_LOGIN["running"]}
 
 
 def _run_oplit_login():
@@ -449,6 +457,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(500, {"error": str(e)})
 
     def _oplit_login(self):
+        if not _oplit_available():
+            return self._json(400, {"error": "Capture live indisponible sur ce serveur (aucun navigateur)."})
         if _OPLIT_LOGIN["running"]:
             return self._json(200, {"ok": True, "already": True})
         threading.Thread(target=_run_oplit_login, daemon=True).start()

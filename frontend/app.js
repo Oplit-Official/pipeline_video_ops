@@ -896,21 +896,27 @@ async function refreshOplit() {
   catch (e) { st = { connected: false }; }
   const dot = $("#oplitDot"), sub = $("#oplitSub"), reco = $("#oplitReco");
   const live = $("#importLive"), hint = $("#liveHint"), wrap = $("#liveToggleWrap");
-  if (st.logging_in) {
-    dot.style.background = "#f5a524"; sub.textContent = "connexion en cours…";
+  const avail = st.available !== false;   // capture live possible sur cet hôte ?
+  if (!avail) {
+    dot.style.background = "#5b5e76"; sub.textContent = "capture live indisponible ici";
+    reco.style.display = "none";
+  } else if (st.logging_in) {
+    dot.style.background = "#f5a524"; sub.textContent = "connexion en cours…"; reco.style.display = "";
   } else if (st.connected) {
-    dot.style.background = "var(--accent)"; sub.textContent = "connecté · staging.oplit.fr";
+    dot.style.background = "var(--accent)"; sub.textContent = "connecté · staging.oplit.fr"; reco.style.display = "";
   } else {
-    dot.style.background = "var(--rose)"; sub.textContent = "non connecté";
+    dot.style.background = "var(--rose)"; sub.textContent = "non connecté"; reco.style.display = "";
   }
   reco.disabled = !!st.logging_in;
   // toggle capture live
   if (live) {
-    live.disabled = !st.connected;
-    if (!st.connected) { live.checked = false; }
-    if (wrap) wrap.style.opacity = st.connected ? "1" : ".5";
-    if (hint) hint.textContent = st.connected
-      ? "" : "Connectez-vous à Oplit (bouton ↻ en bas à gauche) pour activer la capture live.";
+    const ok = avail && st.connected;
+    live.disabled = !ok;
+    if (!ok) live.checked = false;
+    if (wrap) wrap.style.opacity = ok ? "1" : ".5";
+    if (hint) hint.textContent = ok ? ""
+      : (!avail ? "Capture live non disponible sur cet hébergement (import en mode PDF)."
+                : "Connectez-vous à Oplit (↻ en bas à gauche) pour activer la capture live.");
   }
   return st;
 }
