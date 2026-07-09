@@ -11,7 +11,7 @@ BUCKET = os.environ.get("SUPABASE_BUCKET", "videos")
 TABLE = os.environ.get("SUPABASE_TABLE", "imports")
 
 # colonnes autorisées dans la table (évite les erreurs PostgREST)
-COLS = ("id", "title", "section", "category", "icon", "dur", "min", "video", "pdf")
+COLS = ("id", "title", "section", "category", "icon", "dur", "min", "video", "pdf", "active")
 
 
 def enabled():
@@ -52,7 +52,8 @@ def remove(dest):
 
 # ---------- Table ----------
 def db_list():
-    raw = _req(f"{URL}/rest/v1/{TABLE}?select=*&order=created_at.desc", timeout=30)
+    # n'affiche que les actifs (les supprimés ont active=false)
+    raw = _req(f"{URL}/rest/v1/{TABLE}?select=*&active=eq.true&order=created_at.desc", timeout=30)
     return json.loads(raw or "[]")
 
 
@@ -70,8 +71,12 @@ def db_update(item_id, fields):
 
 
 def db_delete(item_id):
-    _req(f"{URL}/rest/v1/{TABLE}?id=eq.{urllib.parse.quote(item_id)}",
-         method="DELETE", extra={"Prefer": "return=minimal"}, timeout=30)
+    # soft delete : passe active=false (le fichier reste dans le bucket, undo possible)
+    db_update(item_id, {"active": False})
+
+
+def db_restore(item_id):
+    db_update(item_id, {"active": True})
 
 
 def db_rename_category(old, new, icon=None):

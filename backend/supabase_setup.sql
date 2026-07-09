@@ -9,8 +9,12 @@ create table if not exists public.imports (
   min        integer,          -- durée arrondie en minutes
   video      text,             -- URL publique du .mp4 (Storage)
   pdf        text,             -- URL publique du .pdf (Storage)
+  active     boolean not null default true,  -- false = supprimé (soft delete)
   created_at timestamptz default now()
 );
+
+-- Si la table existe déjà, ajoute la colonne :
+-- alter table public.imports add column if not exists active boolean not null default true;
 
 -- Le serveur accède avec la clé service_role (bypass RLS). Pas de policy requise.
 -- Si tu veux exposer la table en lecture publique (anon), active plutôt une policy select.

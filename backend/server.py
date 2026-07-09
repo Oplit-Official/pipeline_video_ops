@@ -437,7 +437,7 @@ class Handler(SimpleHTTPRequestHandler):
             if not art:
                 return self._json(400, {"error": "article requis"})
             if supa.enabled():
-                supa.db_insert(art)   # ré-insère la ligne (fichiers toujours dans le bucket)
+                supa.db_restore(art.get("id"))   # réactive la ligne (active=true)
                 return self._json(200, {"ok": True})
             trash = os.path.join(IMPORTS_DIR, "_trash")
             for key in ("video", "pdf"):
